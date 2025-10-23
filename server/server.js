@@ -1,10 +1,7 @@
-import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import records from "./routes/records.js";
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: "./config.env" });
-}
+
 
 const PORT = process.env.PORT || 5050;
 const app = express();
