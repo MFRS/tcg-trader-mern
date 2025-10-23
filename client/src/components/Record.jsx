@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API, { apiFetch } from "./api";
+import API, { apiFetch } from "../api";
 
 export default function Record() {
   const [form, setForm] = useState({ name: "", position: "", level: "" });

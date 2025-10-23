@@ -6,7 +6,7 @@ const API =
 
 export async function apiFetch(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
-    cache: "no-store",            // avoid stale cached responses in prod
+    cache: "no-store",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -14,7 +14,6 @@ export async function apiFetch(path, options = {}) {
     },
   });
   if (!res.ok) throw new Error(`API ${res.status} ${res.statusText}`);
-  // Return JSON if present, else null (for DELETEs with no body)
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
