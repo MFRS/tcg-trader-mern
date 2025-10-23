@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-import dotenv from "dotenv";
 if (process.env.NODE_ENV !== "production") {
   dotenv.config({ path: "./config.env" });
 }
