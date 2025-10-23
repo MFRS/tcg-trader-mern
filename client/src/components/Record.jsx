@@ -16,9 +16,9 @@ export default function Record() {
       const id = params.id?.toString() || undefined;
       if(!id) return;
       setIsNew(false);
-      const response = await fetch(
-        `http://localhost:5050/record/${params.id.toString()}`
-      );
+      const API = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "http://localhost:5050";
+      const response = await fetch(`${API}/record/${params.id}`);
+
       if (!response.ok) {
         const message = `An error has occurred: ${response.statusText}`;
         console.error(message);
@@ -51,7 +51,7 @@ export default function Record() {
       let response;
       if (isNew) {
         // if we are adding a new record we will POST to /record.
-        response = await fetch("http://localhost:5050/record", {
+        response = await fetch(`${API}/record`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -60,7 +60,7 @@ export default function Record() {
         });
       } else {
         // if we are updating a record we will PATCH to /record/:id.
-        response = await fetch(`http://localhost:5050/record/${params.id}`, {
+        response = await fetch(`${API}/record/${params.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
