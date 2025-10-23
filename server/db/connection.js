@@ -1,7 +1,11 @@
 import dotenv from "dotenv";
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-dotenv.config({ path: "./config.env" });
+import dotenv from "dotenv";
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: "./config.env" });
+}
+
 
 
 const uri = process.env.ATLAS_URI || "";
