@@ -14,8 +14,8 @@ const app = express();
 
 
 
-app.use(cors());
-app.use(express.json());;
+app.use(express.json({ limit: "50mb" }));                 // JSON
+app.use(express.urlencoded({ extended: true, limit: "50mb" })); // forms
 
 // Force fresh responses — prevents browsers/CDN from caching old data
 app.use((req, res, next) => {
@@ -41,7 +41,7 @@ async function getNamesOfAllCardsOfAllSets(){
   const ids = allSets.map(set => set.id);
   // remove P-A
   const filterId = ids.filter(set => set != "P-A") 
-  console.log(filterId)
+  // console.log(filterId)
   // will store all cards from loop
   const allCards = []
   let setNo = 5
@@ -52,26 +52,67 @@ async function getNamesOfAllCardsOfAllSets(){
     let currentSetCards = await tcgdex.fetchCards(filterId[i]);
     allCards.push(currentSetCards);
   }
+  // console.log(allCards.flat(Infinity).length)
   // console.log(allCards.length)
-  fs.writeFileSync("tcg-pocket-cards.json", JSON.stringify(allCards, null, 2), "utf8");
-  return allCards;
+  fs.writeFileSync("tcg-pocket-cards2.json", JSON.stringify(allCards, null, 2), "utf8");
+  return allCards.flat(Infinity);
 }
 // getNamesOfAllSets();
 
 async function addExtraFieldsToEachPokemonCard(){
   const allCardsAllSets = await getNamesOfAllCardsOfAllSets();
+  
   const allSetsInfo = await getNamesOfAllSets();
-
-  let newDisplayName = `allCardsAllSets[0].name` + allSetsInfo[2].name
+  const filterPromo = allSetsInfo.filter(set => set.id != "P-A") 
+  const newFilteredCards = [];
+  // console.log(allCardsAllSets[500])
+  for(let i=0;i<allCardsAllSets.length;i++){
+    // console.log(allCardsAllSets[i])
+    let currentCardSetInfo = await determineCardSet(allCardsAllSets[i],filterPromo) 
+    let newDisplayName = `${allCardsAllSets[i].name} (${currentCardSetInfo[0].name}) (${currentCardSetInfo[0].id}) `
+    let availableCards = 0;
+    let tradeUsers = [];
+    let cardNewFields = {
+      newDisplayName,
+      availableCards,
+      tradeUsers,
+      ...allCardsAllSets[i],
+      
+    }
+    newFilteredCards.push(cardNewFields)
+    
+  }
+  
+  
+  
+  fs.writeFileSync("tcg-pocket-cards4.json", JSON.stringify(newFilteredCards, null, 2), "utf8");
+  console.log(newFilteredCards)
 }
 
+async function determineCardSet(cardInfo,setInfo){
+  
+  // get first part of split in -
+  // console.log(cardInfo)
+  let cardSet = cardInfo.id.split("-")[0]
+  let setname = setInfo.filter(set => set.id == cardSet);
+  // console.log(setname[0].name)
+  return setname;
+}
 
+// addExtraFieldsToEachPokemonCard()
 
 // // Use in an async context
 // (async () => {
-//   // Retrieve Furret from the Darkness Ablaze Set
-//   // const card = await tcgdex.card.get('swsh3-136');
-//   const card = await fetch('https://api.tcgdex.net/v2/en/sets/A1');
-//   const {cards} = await card.json();
-//   console.log(cards); // "Furret"
-// })();
+  //   // Retrieve Furret from the Darkness Ablaze Set
+  //   // const card = await tcgdex.card.get('swsh3-136');
+  //   const card = await fetch('https://api.tcgdex.net/v2/en/sets/A1');
+  //   const {cards} = await card.json();
+  //   console.log(cards); // "Furret"
+  // })();
+
+  app.use("/record", records);
+
+//start Express server
+app.listen(PORT, ()=> {
+    console.log(`Server listening on port ${PORT}`);
+});
