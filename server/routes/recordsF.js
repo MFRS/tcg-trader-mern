@@ -80,7 +80,6 @@ router.post(`/${routerUserAccounts}`,async (req,res) => {
     let newUser = {
       name: req.body.name,
       email:req.body.email,
-      password:req.body.password,
       tcgIdNo:req.body.tcgIdNo,
       tcgIdName:req.body.tcgIdName,
       cardTrades:{
@@ -88,25 +87,13 @@ router.post(`/${routerUserAccounts}`,async (req,res) => {
         cardsForTrade:[],
       }
     };
+    
     let collection = await db.collection(collectionUserAccounts);
-    let emailClash =await collection.findOne({email:newUser.email})
-    let usernameClash =await collection.findOne({name:newUser.name})
 
-    if(!emailClash && !usernameClash) {
-      res.status(200).send("user can be created");
-      let result = await collection.insertOne(newUser);
-      res.send(result).status(204);
-      
-    }else if(usernameClash){
-      res.status(400).send("username exists");
-
-    }
-    
-    else if(emailClash){
-      res.status(400).send("email exists");
-    }
     
 
+    let result = await collection.insertOne(newUser);
+    res.send(result).status(204);
   
   }catch(err){
     console.error(err);
@@ -264,208 +251,88 @@ async function syncRecordsDelta({ cardId, userId, lang, delta }) {
   }
 }
 
-router.patch(`/${routerUserAccounts}/:userId/${routerCards}`, authJwt, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { list, card } = req.body || {};
-    let { delta } = req.body || {};
-
-console.log("[PATCH cardsDeal] REQUEST", {
-      url: req.originalUrl,
-      method: req.method,
-      userParam: userId,
-      authUser: req.user?.id,
-      list,
-      card,
-      delta
-    });
-
- 
-
-    // ✅ INSERT THIS HERE
-    const cardIdRaw = card?.id;
-    const logicalId = await resolveLogicalCardId(db, cardIdRaw);
-    if (!logicalId) {
-      return res.status(400).json({
-        code: "bad_card_id",
-        message: "Unknown card id. Send the card code (e.g., 'A1-001') or a valid records _id."
-      });
-    }
-
-    const cardId = logicalId;  // <-- Use this everywhere below instead of card.id
-    const lang = String(card.language).trim();
-    console.log("[PATCH cardsDeal] resolved cardId:", cardId);
-    // ✅ END INSERT
-
- 
-
-    // ... rest of patch continues
-
-    // --- auth: only self can modify
-    if (req.user?.id !== userId) {
-      return res.status(403).json({ code: "forbidden", message: "Can only modify your own trades" });
-    }
-
-    // --- validate
-    if (!ObjectId.isValid(userId)) return res.status(400).json({ code: "bad_user_id", message: "Invalid userId" });
-    const allowed = ["cardsWanted", "cardsForTrade"];
-    if (!allowed.includes(list)) return res.status(400).json({ code: "bad_list", message: `list must be one of ${allowed.join(", ")}` });
-    if (!card || !card.id || !card.language) {
-      return res.status(400).json({ code: "bad_card", message: "card needs id and language" });
-    }
-    delta = parseInt(delta, 10);
-    if (!Number.isFinite(delta) || delta === 0) {
-      return res.status(400).json({ code: "bad_delta", message: "delta must be a non-zero integer (e.g., 1 or -1)" });
-    }
-    if (delta > 10) delta = 10;
-    if (delta < -10) delta = -10;
-
-    const ownerId = new ObjectId(userId);
-    // const cardId = String(card.id).trim();
-    // const lang = String(card.language).trim();
-    const targetPath = `cardTrades.${list}`;
-
-    // --- fetch pre-state to detect activation transition later
-    const preDoc = await db.collection("accounts").findOne(
-      { _id: ownerId },
-      { projection: { "cardTrades.cardsWanted": 1, "cardTrades.cardsForTrade": 1 } }
-    );
-    if (!preDoc) return res.status(404).json({ code: "user_not_found", message: "No account with that id" });
-
-    console.log("[PATCH cardsDeal] PRE-STATE", {
-  wantedCount: preDoc?.cardTrades?.cardsWanted?.length || 0,
-  forTradeCount: preDoc?.cardTrades?.cardsForTrade?.length || 0,
-  cardTrades: preDoc?.cardTrades
-});
-
-    const preHasWanted = hasItems(preDoc?.cardTrades?.cardsWanted);
-    const preHasForTrade = hasItems(preDoc?.cardTrades?.cardsForTrade);
-    const preActive = preHasWanted && preHasForTrade;
-
-    // --- ACCOUNTS: try to $inc existing (id+language+owner)
-    const incResult = await db.collection("accounts").updateOne(
-      { _id: ownerId },
-      { $inc: { [`${targetPath}.$[elem].quantity`]: delta } },
-      {
-        arrayFilters: [
-          { "elem.id": cardId, "elem.language": lang, "elem.owner": ownerId }
-        ]
-      }
-    );
-    if (incResult.matchedCount === 0) {
-      return res.status(404).json({ code: "user_not_found", message: "No account with that id" });
-    }
-
-    let action = null;
-    let removed = false;
-
-    if (incResult.modifiedCount > 0) {
-      action = "inc";
-
-      // If we decremented, auto-remove the element when qty <= 0
-      if (delta < 0) {
-        const pullResult = await db.collection("accounts").updateOne(
-          { _id: ownerId },
-          {
-            $pull: {
-              [targetPath]: {
-                id: cardId,
-                language: lang,
-                owner: ownerId,
-                quantity: { $lte: 0 }
-              }
-            }
-          }
-        );
-        removed = pullResult.modifiedCount > 0;
-      }
-    } else {
-      // No existing element matched
-      if (delta > 0) {
-        await db.collection("accounts").updateOne(
-          { _id: ownerId },
-          { $push: { [targetPath]: { id: cardId, language: lang, quantity: delta, owner: ownerId } } }
-        );
-        action = "pushed_new";
-      } else {
-        return res.status(409).json({
-          ok: false,
-          code: "no_match_to_decrement",
-          message: "Cannot decrement: card not found for this id+language+owner in the selected list"
-        });
-      }
-    }
-
-    // --- fetch post-state to determine ACTIVE status
-    const postDoc = await db.collection("accounts").findOne(
-      { _id: ownerId },
-      { projection: { "cardTrades.cardsWanted": 1, "cardTrades.cardsForTrade": 1 } }
-    );
-
-
-    
-    const postHasWanted = hasItems(postDoc?.cardTrades?.cardsWanted);
-    const postHasForTrade = hasItems(postDoc?.cardTrades?.cardsForTrade);
-    const postActive = postHasWanted && postHasForTrade;
-
-//     const preHasWanted = Array.isArray(preDoc?.cardTrades?.cardsWanted) && preDoc.cardTrades.cardsWanted.length > 0;
-// const preHasForTrade = Array.isArray(preDoc?.cardTrades?.cardsForTrade) && preDoc.cardTrades.cardsForTrade.length > 0;
-// const postHasWanted = Array.isArray(postDoc?.cardTrades?.cardsWanted) && postDoc.cardTrades.cardsWanted.length > 0;
-// const postHasForTrade = Array.isArray(postDoc?.cardTrades?.cardsForTrade) && postDoc.cardTrades.cardsForTrade.length > 0;
-// const preActive = preHasWanted && preHasForTrade;
-// const postActive = postHasWanted && postHasForTrade;
-
-console.log("[PATCH cardsDeal] ACTIVE-STATE", {
-  preHasWanted,
-  preHasForTrade,
-  preActive,
-  postHasWanted,
-  postHasForTrade,
-  postActive
-});
-
-    // --- RECORDS sync rules ---
-    // Only when ACTIVE. While not active, we never touch 'records'.
-    if (postActive) {
-      if (list === "cardsForTrade") {
-        // Normal path: mirror just this card's delta to records
-        await syncRecordsDelta({ cardId, userId, lang, delta });
-      } else if (!preActive && postActive) {
-        // Activation achieved by adding first Wanted → backfill ALL existing cardsForTrade into records
-        const stagedForTrade = postDoc?.cardTrades?.cardsForTrade || [];
-        // Merge duplicates per (id,language) for safety
-        const totals = new Map(); // key = id|lang, val = quantity sum
-        for (const c of stagedForTrade) {
-          if (!c || typeof c !== "object") continue;
-          const idStr = String(c.id || "").trim();
-          const lStr = String(c.language || "").trim();
-          const qty = Number.isFinite(c.quantity) ? c.quantity : 0;
-          if (!idStr || !lStr || qty <= 0) continue;
-          const k = `${idStr}|${lStr}`;
-          totals.set(k, (totals.get(k) || 0) + qty);
-        }
-        for (const [k, qty] of totals.entries()) {
-          const [idStr, lStr] = k.split("|");
-          await syncRecordsDelta({ cardId: idStr, userId, lang: lStr, delta: qty });
-        }
-      }
-    }
-
-    return res.status(200).json({
-      ok: true,
-      action,
-      list,
-      key: { id: cardId, language: lang, owner: userId },
-      delta,
-      removedOnZeroOrLess: removed,
-      state: { preActive, postActive }
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ code: "db_error", message: err.message });
+router.patch(`/${routerUserAccounts}/:userId/${routerCards}`,authJwt, async (req, res) => {
+  
+  let listName = req.body.list;
+  let card = req.body.card;
+  let delta = req.body.delta;
+  let userId = req.params['userId'];
+  console.log(req.user.id)
+  if(req.user.id !== userId){
+    res.status(403).json({message:"forbidden"})
   }
-});
+  else{
+    let isActive = false;
+    let allowedLists = ["cardsForTrade","cardsWanted"];
+    // console.log(allowedLists.includes(listName))
+    if (allowedLists.includes(listName)){
+      if(typeof card == "object" && card.id && card.language){
 
+        if(Number.isFinite(delta) && delta !==0){
+         let user =await db.collection(collectionUserAccounts)
+          .findOne({_id: new ObjectId(userId)})
+          // user different than null
+          if(user !== null){
+
+            // if cards more than 0, then start counting them on the server for everyone
+            let cardsWanted = user.cardTrades.cardsWanted;
+            let cardsForTrade = user.cardTrades.cardsForTrade;
+            
+            if(cardsForTrade.length >0 && cardsWanted.length > 0){
+              isActive = true ;
+              // if()
+              // console.log(`isactive? ${isActive} ${user.cardTrades.cardsForTrade.length} ${user.cardTrades.cardsWanted.length}`);
+            }
+            // modifying the user's cardTrades list
+            let targetPath; 
+            if(listName === cardsWanted){
+              targetPath = cardsWanted;
+            }else{
+              targetPath = cardsForTrade;
+            }
+            let cardId = card.id.trim();
+            let lang = card.language.trim();
+
+            const submittingObject = {
+              user:user,
+              path:targetPath,
+              card:{id:cardId,language:lang},
+              delta:delta
+
+            }
+            console.log(`${JSON.stringify(submittingObject)}` )
+            
+
+            // res.status(200).json({message:"found user"})
+            
+          }else{
+            res.status(400).json({message:"user not found"})
+
+          }
+          res.status(200).json({message:"card is good , delta is good"})
+        }else{
+          res.status(400).json({message:"bad delta"})
+
+        }
+        
+        
+      }else{
+        res.status(400).json({message:"Bad card"})
+
+      }
+
+    } else{
+      res.status(400).json({message:"wrong list name"})
+    }
+
+  }
+
+
+
+  // console.log(`user ${userId} ${listName}, ${card} , ${delta}`)
+  // if you don't send this, postman hangs
+
+});
 
 
 
