@@ -6,6 +6,7 @@ import records from "./routes/records.js";
 import TCGdex from '@tcgdex/sdk'
 import fs from "fs";
 import auth from "./routes/auth.js";
+import { deleteAllCardsForTrade, resetAvailableCards } from "./utils/utilFunctions.js";
 
 // Instantiate the SDK with your preferred language
 const tcgdex = new TCGdex("en");
@@ -105,7 +106,7 @@ if (process.env.NODE_ENV !== "production") {
     return setname;
   }
   
-  // addExtraFieldsToEachPokemonCard()
+  resetAvailableCards()
   
   // // Use in an async context
   // (async () => {
@@ -115,6 +116,8 @@ if (process.env.NODE_ENV !== "production") {
     //   const {cards} = await card.json();
     //   console.log(cards); // "Furret"
     // })();
+
+
     
     app.use("/record", records);
     app.use("/auth", auth);

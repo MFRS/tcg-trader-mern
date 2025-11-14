@@ -2,14 +2,11 @@ import express from "express";
 
 // This will help us connect to the database
 import db from "../db/connection.js";
-
+import { formatDate } from "../utils/utilFunctions.js";
 // This help convert the id from string to ObjectId for the _id.
 import { ObjectId } from "mongodb";
 import { authJwt } from "../middleware/authJwt.js";
-const collectionPokemonName = "records"
-const collectionUserAccounts = "accounts"
-const routerUserAccounts = "accounts";
-const routerCards = "cardsDeal";
+import { collectionPokemonName, collectionUserAccounts, routerCards, routerUserAccounts } from "../utils/wideVariables.js";
 // router is an instance of the express router.
 // We use it to define our routes.
 // The router will be added as a middleware and will take control of requests starting with path /record.
@@ -27,6 +24,10 @@ router.get("/getAllCards", async(req,res) => {
 })
 
 
+// this route will give you access of another user's "tcgidNo" and "tcgIdName"
+router.get("/getPokemonTradeInfo", async (req,res)=> {
+
+})
 
 
 
@@ -42,7 +43,7 @@ router.get("/:id", async (req, res) => {
   let collection = await db.collection(collectionPokemonName);
   let query = { _id: new ObjectId(req.params.id) };
   let result = await collection.findOne(query);
-
+  
   if (!result) res.send("Not found").status(404);
   else res.send(result).status(200);
 });
@@ -51,7 +52,7 @@ router.get(`/${routerUserAccounts}/:id`, async (req,res) => {
   let collection = await db.collection(collectionUserAccounts);
   let query = {_id: new ObjectId(req.params.id)};
   let result = await collection.findOne(query);
-
+  
   if(!result) res.send("Not found").status(404);
   else res.send(result).status(200);
 });
@@ -77,8 +78,10 @@ router.post("/", async (req, res) => {
 
 router.post(`/${routerUserAccounts}`,async (req,res) => {
   try{
+    const currentDate = formatDate(Date.now())
     let newUser = {
       name: req.body.name,
+      lastLogIn: currentDate,
       email:req.body.email,
       password:req.body.password,
       tcgIdNo:req.body.tcgIdNo,
@@ -472,7 +475,7 @@ console.log("[PATCH cardsDeal] ACTIVE-STATE", {
 
 
 // This section will help you delete a record
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",authJwt, async (req, res) => {
   try {
     const query = { _id: new ObjectId(req.params.id) };
 
@@ -486,19 +489,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.delete(`/${routerUserAccounts}/:id`, async(req,res) => {
-  try{
-    const query = { _id: new ObjectId(req.params.id) };
-const collection = db.collection(collectionUserAccounts);
-let result = await collection.deleteOne(query);
-
-    res.send(result).status(200);
-  
-  }catch(err){
-    console.error(err);
-    res.status(500).send("Error del user");
-  }
-})
 
 
 // --- Bulk insert (POST /record/bulk) ---
