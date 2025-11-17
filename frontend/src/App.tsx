@@ -28,7 +28,8 @@ function App() {
     return pokemonCards.map((pokemonCard) => (
       <div key={pokemonCard.localId}>
         <h3>{pokemonCard.newDisplayName}</h3>
-        <img src={pokemonCard.image} alt={pokemonCard.newDisplayName} width="120" />
+        {/* documentation for images - https://tcgdex.dev/assets?ref=assets.tcgdex.net */}
+        <img src={`${pokemonCard.image}/low.png`} alt={pokemonCard.newDisplayName} width="120" />
       </div>
     ));
   }
