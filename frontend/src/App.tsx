@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "./api/axiosConfig.tsx";
-
+import PokeCard from "./components/PokeCard.tsx";
 interface PokemonCard {
   localId: string;
   newDisplayName: string;
@@ -24,17 +24,16 @@ function App() {
     getPokemonCards();
   }, []);
 
-  function returnPokemonCardList() {
-    return pokemonCards.map((pokemonCard) => (
-      <div key={pokemonCard.localId}>
-        <h3>{pokemonCard.newDisplayName}</h3>
-        {/* documentation for images - https://tcgdex.dev/assets?ref=assets.tcgdex.net */}
-        <img src={`${pokemonCard.image}/low.png`} alt={pokemonCard.newDisplayName} width="120" />
-      </div>
-    ));
-  }
+    return (
+      <div>
+        {pokemonCards.map((pokemonCard) => (
+          <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
+        ))}
 
-  return <div>{returnPokemonCardList()}</div>;
+      </div>
+      );
+    
+
 }
 
 export default App;
