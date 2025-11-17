@@ -106,7 +106,6 @@ if (process.env.NODE_ENV !== "production") {
     return setname;
   }
   
-  resetAvailableCards()
   
   // // Use in an async context
   // (async () => {

@@ -26,28 +26,53 @@ let cardsWithPlayerInputs =await cardCollection.find(
 ).toArray();
 // console.log(cardsWithPlayerInputs[0].tradeUsers[currentUserId])
 
-// ! create a for loop through each card returned
+// ! if there are no cards from user
+if (!cardsWithPlayerInputs){
+    return result.status(200).send({message:"no cards from user"})
+}
 
+// ! create a for loop through each card returned
+for (let i=0;i<=cardsWithPlayerInputs.length-1;i++){
+console.log(cardsWithPlayerInputs[i])
+
+
+    // let currentCardId =  
 // ! count the amount the player owns in each card into a var
 let finalCardCount = 0;
-for (const [key, value] of Object.entries(cardsWithPlayerInputs[0].tradeUsers[currentUserId])) {
+for (const [key, value] of Object.entries(cardsWithPlayerInputs[i].tradeUsers[currentUserId])) {
     finalCardCount += value
 //   console.log(`${key}: ${value}`);
 
 }
-let currentCardPoolInDb = parseInt(cardsWithPlayerInputs[0].availableCards) - finalCardCount; 
+let currentCardPoolInDb = parseInt(cardsWithPlayerInputs[i].availableCards) - finalCardCount; 
 
-console.log(currentCardPoolInDb)
-// ! remove the entries from the card, and update availableCards number
-let cardPoolWithCards = await cardCollection.updateMany(
-    {},
-  {
+// ! deletes cards and sets available cards on this card
+await cardCollection.updateOne(
+
+{_id:cardsWithPlayerInputs[i]._id}
+
+,
+
+ {
     $set: {
       
-      availableCards: 0
+      availableCards: currentCardPoolInDb
+    }
+  ,
+  
+    $unset:
+    {
+        [`tradeUsers.${currentUserId}`]: ""  
     }
   }
-);
+
+
+)
+
+
+}
+
+// ! deletes cards and sets available cards (this is only done once as it updates the whole database)
 // let cardPoolWithCards = await cardCollection.updateMany(
 //     {[`tradeUsers.${currentUserId}`] : {$exists:true} },
 //   {
@@ -65,17 +90,5 @@ let cardPoolWithCards = await cardCollection.updateMany(
 // );
 
 
-// const filteredTradeUsers = Object.fromEntries(
-//   Object.entries(filteredCardPoolWithoutPlayersCards).filter(
-//     ([key, value]) => key !== userObjectId
-//   )
-// );
 
-// console.log(filteredTradeUsers); // → {}
-
-// remove them
-// await cardCollection.updateOne(
-//           { _id: currentCardDbObject._id },
-//           { $push: { [targetPath]: { id: cardId, language: lang, quantity: delta, owner: ownerId } } }
-//         );
 }

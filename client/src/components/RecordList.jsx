@@ -40,6 +40,7 @@ export default function RecordList() {
     try {
       const data = await apiFetch("/record/");
       setRecords(data || []);
+      console.log(data)
     } catch (err) {
       console.error("Failed to load records:", err);
     }
