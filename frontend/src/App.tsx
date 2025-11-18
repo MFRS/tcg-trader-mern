@@ -13,22 +13,34 @@ function App() {
   const getPokemonCards = async () => {
     try {
       const response = await api.get("/record");
-      console.log(response.data);
+      // console.log(response.data);
       setPokemonCards(response.data);
     } catch (err) {
       console.log(err);
     }
   };
 
+  
+
   useEffect(() => {
     getPokemonCards();
+    
   }, []);
+
+useEffect(() => {
+  if (pokemonCards.length > 0) {
+    console.log(pokemonCards[0].localId);
+  }
+}, [pokemonCards]);
 
     return (
       <div>
-        {pokemonCards.map((pokemonCard) => (
+        {pokemonCards.length > 0 && (
+        <PokeCard key ={pokemonCards[0].localId} card={pokemonCards[0]}/>
+        /* {pokemonCards.map((pokemonCard) => (
           <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
-        ))}
+        ))} */
+        )}
 
       </div>
       );

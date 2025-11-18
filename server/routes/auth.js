@@ -10,6 +10,43 @@ import { findAndDeleteCardRecordsFromUser } from "../services/auth.service.js";
 import { collectionPokemonName,collectionUserAccounts,routerCards,routerUserAccounts } from "../utils/wideVariables.js";
 import { ObjectId } from "mongodb";
 
+// this is accessed by public to get cardsForTrade
+router.get(`/${routerUserAccounts}/:id`, async (req, res) => {
+  try {
+    const collection = db.collection(collectionUserAccounts);
+    const { id } = req.params;
+
+    // 🔹 If your _id field in Mongo is an ObjectId, keep this:
+    const query = { _id: new ObjectId(id) };
+
+    // 🔹 If your _id is a STRING in the DB, use this instead:
+    // const query = { _id: id };
+
+    const result = await collection.findOne(query);
+
+    if (!result) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const filteredPublicInfo = {
+      playerId: result._id?.toString(),              // 👈 use result._id, not bare _id
+      tcgIdNo: result.tcgIdNo,
+      tcgIdName: result.tcgIdName,
+      cardsWanted: result.cardTrades?.cardsWanted ?? [],
+      lastLogin: result.lastLogIn
+    };
+
+    return res.status(200).json(filteredPublicInfo);
+  } catch (err) {
+    console.error("Error in GET /auth/accounts/:id:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
 router.post("/login",async (req, res) => {
   try{
     const {name, password} = req.body;
