@@ -6,6 +6,8 @@ export interface User {
   password: string;
   tcgIdNo: string;
   tcgIdName: string;
+  // for PokeCard getting infor on all cardsWanted
+  cardsWanted?:CardTradeEntry[];
 
   cardTrades: CardTrades;
 }

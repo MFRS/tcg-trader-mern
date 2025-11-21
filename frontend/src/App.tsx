@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "./api/axiosConfig.tsx";
-import PokeCard from "./components/PokeCard.tsx";
+import PokeCard from "./components/PokeCards/PokeCard.tsx";
 interface PokemonCard {
   localId: string;
   newDisplayName: string;
@@ -29,7 +29,7 @@ function App() {
 
 useEffect(() => {
   if (pokemonCards.length > 0) {
-    console.log(pokemonCards[0].localId);
+    // console.log(pokemonCards[0].localId);
   }
 }, [pokemonCards]);
 
@@ -37,9 +37,9 @@ useEffect(() => {
       <div>
         {pokemonCards.length > 0 && (
         <PokeCard key ={pokemonCards[0].localId} card={pokemonCards[0]}/>
-        /* {pokemonCards.map((pokemonCard) => (
-          <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
-        ))} */
+        // pokemonCards.map((pokemonCard) => (
+        //   <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
+        // ))
         )}
 
       </div>
