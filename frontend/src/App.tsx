@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import api from "./api/axiosConfig.tsx";
 import PokeCard from "./components/PokeCards/PokeCard.tsx";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import { Popper } from '@mui/material';
+import Popover from '@mui/material/Popover';
 interface PokemonCard {
   localId: string;
   newDisplayName: string;
@@ -36,10 +45,15 @@ useEffect(() => {
     return (
       <div>
         {pokemonCards.length > 0 && (
-        <PokeCard key ={pokemonCards[0].localId} card={pokemonCards[0]}/>
-        // pokemonCards.map((pokemonCard) => (
-        //   <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
-        // ))
+          
+        // <PokeCard key ={pokemonCards[0].localId} card={pokemonCards[0]}/>
+
+        
+        //  
+        
+        pokemonCards.map((pokemonCard) => (
+          <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
+        ))
         )}
 
       </div>

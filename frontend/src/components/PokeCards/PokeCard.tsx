@@ -8,12 +8,41 @@ import type { User } from '../../types/User.ts';
 import CardsWantedDropDown from './CardsWantedDropdown.tsx';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import { Popper, Tab } from '@mui/material';
+import Popover from '@mui/material/Popover';
 function PokeCard({card}: {card:PokemonCard}) {
     const [showImage,setShowImage] = useState(false);
     const [loadedOnce,setLoadedOnce] = useState(false);
   // playerTraderPublicInfo
     const [playerTradeInfo,setPlayerTradeInfo] = useState<User[]>([]);
     const [cardsWantedIds,setCardsWantedIds] = useState<string[]>([]);
+
+    // Popover feature
+    const [anchorEl,setAnchorEl] =useState<HTMLElement | null>(null);
+    
+    const handlePopoverClick = (event: React.MouseEvent<HTMLElement>) => {
+      setImageToLoadOnce()
+      setAnchorEl(event.currentTarget);
+    };
+    
+    const handlePopoverClose = () => {
+      console.log("out");
+      setShowImage(false);
+      setAnchorEl(null);
+      
+    }
+    
+    const open = Boolean(anchorEl)
+    const id = open ? 'simple-popover' : undefined;
+
+    
     function setImageToLoadOnce(){
         setShowImage(true);
         setLoadedOnce(true);
@@ -139,31 +168,75 @@ useEffect(() => {
     
     
 return (
-    <div
-      onMouseEnter={() => setImageToLoadOnce()}
-      onMouseLeave={() => setShowImage(false)}
-      style={{ padding: "10px" }}
-    >
-      <p>{card.newDisplayName}</p>
-      <p>Available Cards: {card.availableCards}</p>
-      <p>Trade Users: {card.availableCards}</p>
-      {playerTradeInfo.length >0 && (
-        <CardsWantedDropDown cardsWantedIds={cardsWantedIds} playerTradeInfo={playerTradeInfo}/>
+   
+<TableContainer>
+      <Table sx={{minWidth:650}} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell align="left">Card Name (Hover For Image)</TableCell>
+            <TableCell align="left">No. of Available Cards</TableCell>
+            <TableCell align="left">Cards Required For Trade</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow key={0} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} > 
 
-      )}
+  <TableCell component="th" scope='row'
+        onMouseEnter={handlePopoverClick}
+      onMouseLeave={handlePopoverClose}
+        >
+
+
+
+
+
+      
+      {card.newDisplayName}
       {/* Only load image when showImage is true */}
-      {loadedOnce && showImage ? (
-        <img
-          src={`${card.image}/low.png`}
-          alt={card.newDisplayName}
-          width={200}
-          style={{ display: "block", marginTop: "8px" }} />
-      ): (
-        <span style={{ fontSize:"12px",opacity:0.6}}>
-        Hover To load preview...
-        </span>
-      )}
-      </div>
+      {loadedOnce && (
+        <Popover
+        
+id={id}
+open={open}
+anchorEl={anchorEl}
+onClose={handlePopoverClose}
+anchorOrigin={{
+  vertical:'center',
+  horizontal:'left',
+}}
+transformOrigin={{
+  vertical:"top",
+  horizontal:"center"
+}}
+sx={{pointerEvents:"none"}}
+disableRestoreFocus
+>
+
+    <img
+    src={`${card.image}/low.png`}
+    alt={card.newDisplayName}
+    width={200}
+    style={{ display: "block", marginTop: "8px",float:"left" }} />
+      </Popover> 
+  )}
+
+
+
+
+
+
+    
+    </TableCell>
+  <TableCell component="th" scope='row'>{card.availableCards}</TableCell>
+  {playerTradeInfo.length >0 && (
+  <TableCell component="th" scope='row'>      <CardsWantedDropDown cardsWantedIds={cardsWantedIds} playerTradeInfo={playerTradeInfo}/></TableCell>
+  )}
+
+          </TableRow>
+
+        </TableBody>
+      </Table>
+      </TableContainer>
 )}
 
 export default PokeCard;

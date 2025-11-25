@@ -8,6 +8,7 @@ import Paper from '@mui/material/Paper';
 import type { User } from '../../types/User';
 import { use } from 'react';
 import { useEffect } from 'react';
+import { Button } from '@mui/material';
 
 
 
@@ -20,6 +21,17 @@ export default function CardOwnersList({cardId,playersWhoWantsThisCardToTrade,nu
   console.log(`${playersWhoWantsThisCardToTrade}`)
 
 
+  function copyToClipboard(value:string){
+    navigator.clipboard.writeText(value)
+    .then(() => {
+      console.log("copied",value);
+    })
+    .catch((err) =>{
+      console.error("f");
+    })
+
+    
+  }
 
   function createData(
     name: string,
@@ -44,7 +56,7 @@ export default function CardOwnersList({cardId,playersWhoWantsThisCardToTrade,nu
         <TableHead>
           <TableRow>
             <TableCell align="right">TCGP Username</TableCell>
-            <TableCell align="right">TCGP ID</TableCell>
+            <TableCell align="right">TCGP ID (Click on ID to copy)</TableCell>
             <TableCell align="right">Number of Cards</TableCell>
             <TableCell align="right">Last Logged In</TableCell>
           </TableRow>
@@ -58,7 +70,11 @@ export default function CardOwnersList({cardId,playersWhoWantsThisCardToTrade,nu
               <TableCell component="th" scope="row">
                 {row.tcgIdName}
               </TableCell>
-              <TableCell align="right">{row.tcgIdNo}</TableCell>
+              <TableCell align="right">
+                <Button onClick={() =>copyToClipboard(row.tcgIdNo)}>
+                  {row.tcgIdNo}
+                </Button>
+                </TableCell>
               <TableCell align="right">{numberCardsPerPlayer[index]}</TableCell>
               <TableCell align="right">{row.lastLogin}</TableCell>
             </TableRow>
