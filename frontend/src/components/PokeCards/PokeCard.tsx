@@ -17,13 +17,15 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Popper, Tab } from '@mui/material';
 import Popover from '@mui/material/Popover';
+import { usePokemonCardStore } from '../../store/pokemonCardsStore.tsx';
 function PokeCard({card}: {card:PokemonCard}) {
     const [showImage,setShowImage] = useState(false);
     const [loadedOnce,setLoadedOnce] = useState(false);
   // playerTraderPublicInfo
     const [playerTradeInfo,setPlayerTradeInfo] = useState<User[]>([]);
     const [cardsWantedIds,setCardsWantedIds] = useState<string[]>([]);
-
+    const [cardNamesAvailableForTrade,setCardsNamesAvailableForTrade] = useState<string[]>([]);
+  const pokeCardStore = usePokemonCardStore();
     // Popover feature
     const [anchorEl,setAnchorEl] =useState<HTMLElement | null>(null);
     
@@ -137,6 +139,7 @@ useEffect(() => {
       console.error("Error fetching player trade info:", err);
     }
   };
+  
 
   getPublicId();
 
@@ -152,6 +155,9 @@ useEffect(() => {
           //  ! set cardsUserIds once
           // console.log(playerTradeInfo)
             setCardsWantedIds(getListOfSeparateCardsWanted()[0])
+
+              //  set names of cards for trade cards list  
+        setCardsNamesAvailableForTrade(cardsWantedIds.map(currentId=>pokeCardStore.pokemonCards.find(pokemonCard=>pokemonCard.id === currentId)?.newDisplayName))
           // ! set dropdown
         }
       ,[playerTradeInfo])
@@ -169,16 +175,7 @@ useEffect(() => {
     
 return (
    
-<TableContainer>
-      <Table sx={{minWidth:650}} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell align="left">Card Name (Hover For Image)</TableCell>
-            <TableCell align="left">No. of Available Cards</TableCell>
-            <TableCell align="left">Cards Required For Trade</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+
           <TableRow key={0} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} > 
 
   <TableCell component="th" scope='row'
@@ -229,14 +226,11 @@ disableRestoreFocus
     </TableCell>
   <TableCell component="th" scope='row'>{card.availableCards}</TableCell>
   {playerTradeInfo.length >0 && (
-  <TableCell component="th" scope='row'>      <CardsWantedDropDown cardsWantedIds={cardsWantedIds} playerTradeInfo={playerTradeInfo}/></TableCell>
+  <TableCell component="th" scope='row'>      <CardsWantedDropDown cardsWantedIds={cardsWantedIds} playerTradeInfo={playerTradeInfo} cardNamesAvailableForTrade={cardNamesAvailableForTrade}/></TableCell>
   )}
 
           </TableRow>
 
-        </TableBody>
-      </Table>
-      </TableContainer>
 )}
 
 export default PokeCard;

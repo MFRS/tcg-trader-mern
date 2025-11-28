@@ -8,12 +8,19 @@ import type { SelectChangeEvent } from '@mui/material';
 import type { User } from '../../types/User';
 import CardOwnersList from './CardOwnersList';
 import { useEffect,useState } from 'react';
+import { usePokemonCardStore } from '../../store/pokemonCardsStore';
 
 
-export default function CardsWantedDropDown({cardsWantedIds,playerTradeInfo}: {cardsWantedIds:String[],playerTradeInfo:User[]}) {
+export default function CardsWantedDropDown({cardsWantedIds,playerTradeInfo,cardNamesAvailableForTrade}: {cardsWantedIds:String[],playerTradeInfo:User[],cardNamesAvailableForTrade:string[]} ) {
   const [currentCardId, setCurrentCardId] = React.useState('');
   const [playersWhoWantsThisCardToTrade,setPlayersWhoWantsThisCardToTrade]=useState<User[]>([]);
   const [numberofCardsEachPlayerHas,setNumberofCardsEachPlayerHas]=useState<number[]>([]);
+  const [cardNames,setCardNames] = useState<string[]>([]);
+  const pokeCardStore = usePokemonCardStore();
+  
+  
+  
+  
   const handleChange = (event: SelectChangeEvent) => {
     // need to keep value as 
     setCurrentCardId(event.target.value as string);
@@ -34,6 +41,7 @@ useEffect(()=>{
     // looks through the quantity of each card the player has and maps it to the same index as the one in playersWhoWantsThisCardToTrade
     const cardNumbers = players.map(currentPlayer => currentPlayer.cardsWanted?.filter(currentCard => currentCard.id === currentCardId).reduce((acc,currVal)=> acc + currVal.quantity,0))
     setNumberofCardsEachPlayerHas(cardNumbers)
+  // setCardNames(pokeCardStore.pokemonCards.fin)
 
   },[currentCardId])
 
@@ -54,9 +62,9 @@ useEffect(()=>{
           label="cardsForTrade"
           onChange={handleChange}
         >
-            {cardsWantedIds.map((currentId,i) =>
+            {cardNamesAvailableForTrade.map((currentId,i) =>
                 (
-                <MenuItem value={currentId}>{currentId}</MenuItem>
+                <MenuItem value={cardsWantedIds[i]}>{currentId}</MenuItem>
                 )
             )
         }
@@ -65,7 +73,7 @@ useEffect(()=>{
       </FormControl>
     </Box>
 
-        // Show list of players who have that card selected
+        {/* // Show list of players who have that card selected */}
         {playersWhoWantsThisCardToTrade.length>0 && (
           <CardOwnersList cardId = {currentCardId} playersWhoWantsThisCardToTrade ={playersWhoWantsThisCardToTrade} numberCardsPerPlayer ={numberofCardsEachPlayerHas}/>
         )}

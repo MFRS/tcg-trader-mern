@@ -9,16 +9,17 @@ import type { User } from '../../types/User';
 import { use } from 'react';
 import { useEffect } from 'react';
 import { Button } from '@mui/material';
+import { usePokemonCardStore } from '../../store/pokemonCardsStore';
 
 
 
 
 export default function CardOwnersList({cardId,playersWhoWantsThisCardToTrade,numberCardsPerPlayer} : {cardId:string,playersWhoWantsThisCardToTrade:User[],numberCardsPerPlayer:number[]}) {
   // userid , number of cards
-  
+  const usePokeStore = usePokemonCardStore();
 // 
 
-  console.log(`${playersWhoWantsThisCardToTrade}`)
+  // console.log(`${playersWhoWantsThisCardToTrade}`)
 
 
   function copyToClipboard(value:string){
@@ -32,6 +33,8 @@ export default function CardOwnersList({cardId,playersWhoWantsThisCardToTrade,nu
 
     
   }
+
+
 
   function createData(
     name: string,

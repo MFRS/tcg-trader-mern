@@ -10,6 +10,9 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { Popper } from '@mui/material';
 import Popover from '@mui/material/Popover';
+import {  usePokemonCardStore } from "./store/pokemonCardsStore.tsx";
+
+
 interface PokemonCard {
   localId: string;
   newDisplayName: string;
@@ -17,6 +20,9 @@ interface PokemonCard {
 }
 
 function App() {
+
+  const pokeCardStore = usePokemonCardStore();
+  
   const [pokemonCards, setPokemonCards] = useState<PokemonCard[]>([]);
 
   const getPokemonCards = async () => {
@@ -24,6 +30,8 @@ function App() {
       const response = await api.get("/record");
       // console.log(response.data);
       setPokemonCards(response.data);
+      // setting pokecardstore for using with other components
+      pokeCardStore.setPokemonCards(response.data)
     } catch (err) {
       console.log(err);
     }
@@ -38,6 +46,7 @@ function App() {
 
 useEffect(() => {
   if (pokemonCards.length > 0) {
+    // console.log(pokeCardStore.pokemonCards)
     // console.log(pokemonCards[0].localId);
   }
 }, [pokemonCards]);
@@ -50,10 +59,25 @@ useEffect(() => {
 
         
         //  
+        <TableContainer>
+      <Table sx={{minWidth:650}} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell align="left">Card Name (Hover For Image)</TableCell>
+            <TableCell align="left">No. of Available Cards</TableCell>
+            <TableCell align="left">Cards Required For Trade</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
         
-        pokemonCards.map((pokemonCard) => (
+          <PokeCard key ={pokemonCards[0].localId} card={pokemonCards[0]}/>
+        {/* {pokemonCards.map((pokemonCard) => (
           <PokeCard key ={pokemonCard.localId} card={pokemonCard}/>
-        ))
+        ))} */}
+                  </TableBody>
+      </Table>
+      </TableContainer>
+
         )}
 
       </div>
