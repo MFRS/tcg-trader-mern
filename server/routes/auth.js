@@ -85,7 +85,6 @@ router.post("/login",async (req, res) => {
         process.env.JWT_SECRET,
         { algorithm: "HS256", expiresIn: "1h" }
       );
-    
       res.json({
         ok: true,
         token,
@@ -93,7 +92,10 @@ router.post("/login",async (req, res) => {
           iss: process.env.JWT_ISS,
           aud: process.env.JWT_AUD,
           secret_fp: secretFingerprint()
-        }
+        },
+        user
+        
+
       });
       
     }
