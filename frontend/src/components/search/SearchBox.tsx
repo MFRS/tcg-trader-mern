@@ -11,14 +11,24 @@ import { usePokemonCardStore } from '../../store/pokemonCardsStore';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-// import Select, { SelectChangeEvent } from '@mui/material/Select';
-
+import Select, {type SelectChangeEvent } from '@mui/material/Select';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 export const SearchBox = () => {
-    const pokeCardStore = usePokemonCardStore().pokemonCards;
-    const [currentSetDropdown,setCurrentSetDropdown] = useState('');
+    const pokeCardStore = usePokemonCardStore();
+    const [currentSetDropdown,setCurrentSetDropdown] = useState('0');
+    const [currentExpansionDropdown,setCurrentExpansionDropdown] = useState('0');
 
 const handleSetDropdownChange = (event: SelectChangeEvent) => {
     setCurrentSetDropdown(event.target.value as string);
+  };
+const handleExpansionDropdownChange = (event: SelectChangeEvent) => {
+    setCurrentExpansionDropdown(event.target.value as string);
   };
 
 
@@ -37,7 +47,7 @@ function handleChangeSearchBar(event:ChangeEvent<HTMLInputElement>){
 // console.log(filteredListQuery1)
 
 //  return query1;
-console.log(useSearchFunction(event.target.value,pokeCardStore))
+console.log(useSearchFunction(event.target.value,pokeCardStore.pokemonCards))
 }
 
     
@@ -89,28 +99,22 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
     
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-         
-          {/* <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton> */}
-          {/* <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
-          >
-            MUI
-          </Typography> */}
-          <Search>
+
+<div>
+ <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell align="center">Search Card Name</TableCell>
+            <TableCell align="center">Rarity</TableCell>
+            <TableCell align="center">Expansion</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          <TableRow>
+
+
+          <TableCell align="center"><Search>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -119,23 +123,65 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
               inputProps={{ 'aria-label': 'search' }}
               onChange={handleChangeSearchBar}
             />
-            <FormControl fullWidth>
-  <InputLabel id="demo-simple-select-label">Age</InputLabel>
+          </Search></TableCell>
+          <TableCell>
+
+<FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Rarity</InputLabel>
   <Select
     labelId="demo-simple-select-label"
     id="demo-simple-select"
     value={currentSetDropdown}
     label="currentSet"
     onChange={handleSetDropdownChange}
-  >
-    <MenuItem value={10}>Ten</MenuItem>
+    
+   
+
+    >
+    {pokeCardStore.rarities.map((currentRarity,id) => (
+      
+      <MenuItem value={id}>{currentRarity}</MenuItem>
+    )
+  )
+}
   </Select>
 </FormControl>
-          </Search>
 
-        </Toolbar>
+          </TableCell>
+          <TableCell>
 
-      </AppBar>
-    </Box>
+<FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Expansion</InputLabel>
+  <Select
+    labelId="demo-simple-select-label"
+    id="demo-simple-select"
+    value={currentExpansionDropdown}
+    label="currentExpansion"
+    onChange={handleExpansionDropdownChange}
+   
+
+    >
+    {pokeCardStore.expansions.map((currentRarity,id) => (
+      
+      <MenuItem value={id}>{currentRarity}</MenuItem>
+    )
+  )
+}
+  </Select>
+</FormControl>
+
+          </TableCell>
+
+
+          
+
+          </TableRow>
+
+        </TableBody>
+      </Table>
+    </TableContainer>
+    
+</div>
+
   )
 }

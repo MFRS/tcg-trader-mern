@@ -38,8 +38,21 @@ def transform_card_structure(pokemonDatabase):
 
     return pokemonDatabase
 
+rarityArray =[]
+def getRarityList():
+    for pokemonCard in allCardsFetchedFromTcgDex:
+        if pokemonCard['rarity'] not in rarityArray: 
+            rarityArray.append(pokemonCard['rarity'])
+    return rarityArray
+cardSet=[]
+def getSetNamesList():
+    for pokemonCard in allCardsFetchedFromTcgDex:
+        if pokemonCard['set']['name'] not in rarityArray: 
+            rarityArray.append(pokemonCard['set']['name'])
+    return rarityArray
 
 
+print(getSetNamesList())
 
     
     
@@ -71,7 +84,7 @@ def saveToFile():
 
     with open(r'C:\Users\Migue\Documents\GitHub\tcg-trader-mern\routeDataDumps\data.json', 'w') as f:
         json.dump(transform_card_structure(allCardsFetchedFromTcgDex), f)
-saveToFile()
+# saveToFile()
 
 # create new object for new structure
 # feed in in a array inside a for loop
