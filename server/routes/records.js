@@ -10,8 +10,10 @@ import { collectionPokemonName, collectionUserAccounts, routerCards, routerUserA
 // router is an instance of the express router.
 // We use it to define our routes.
 // The router will be added as a middleware and will take control of requests starting with path /record.
-const router = express.Router();
+import TCGdex from '@tcgdex/sdk'
 
+const router = express.Router();
+const tcgdex = new TCGdex("en");
 router.get("/getAllUsers", async(req,res) => {
   let collection = await db.collection(collectionUserAccounts);
   let results = await collection.find({}).toArray();
@@ -28,6 +30,77 @@ router.get("/getAllCards", async(req,res) => {
 router.get("/getPokemonTradeInfo", async (req,res)=> {
 
 })
+
+// router to get list of all sets
+router.get("/getSetNamesInfo",async(req,res)=> {
+  let results = await tcgdex.fetchSets('tcgp');
+  res.send(results).status(200);
+})
+
+// router to get rarities
+router.get("/getRarities",async(req,res)=> {
+    let cardSets = await tcgdex.fetchSets('tcgp');
+    // const allSets = await getNamesOfAllSets();
+    const ids = cardSets.map(set => set.id);
+    // remove P-A
+    const filterId = ids.filter(set => set != "P-A") 
+    // console.log(filterId)
+    // will store all cards from loop
+    const allCards = []
+    let setNo = 5
+    // let currentSetCards = await tcgdex.fetchCards(allSets[setNo]);
+    // fs.writeFileSync("set"+setNo+".json", JSON.stringify(currentSetCards, null, 2), "utf8");
+    
+    for(let i=0;i<filterId.length; i++){
+      let currentSetCards = await tcgdex.fetchCards(filterId[i]);
+      allCards.push(currentSetCards);
+    }
+
+    const allCardsFullInfo = []
+
+    // for (let i=0;i<4;i++){
+      for (let i=0;i<allCards.length;i++){
+      let currentSet = allCards[i];
+      for(let r=0;r<currentSet.length;r++){
+
+        const card = await tcgdex.fetchCard(allCards[i][r].id);
+        allCardsFullInfo.push(card);
+      } 
+    }
+    
+      // const card = await tcgdex.fetchCard(allCards[0][0].id);
+  
+  
+  
+// res.send(card).status(200);
+res.send(allCardsFullInfo).status(200);
+})
+
+// router to get list of all sets from tcgdex
+router.get("/getCardsFromTcgDex",async(req,res)=> {
+  let cardSets = await tcgdex.fetchSets('tcgp');
+    // const allSets = await getNamesOfAllSets();
+    const ids = cardSets.map(set => set.id);
+    // remove P-A
+    const filterId = ids.filter(set => set != "P-A") 
+    // console.log(filterId)
+    // will store all cards from loop
+    const allCards = []
+    let setNo = 5
+    // let currentSetCards = await tcgdex.fetchCards(allSets[setNo]);
+    // fs.writeFileSync("set"+setNo+".json", JSON.stringify(currentSetCards, null, 2), "utf8");
+    
+    for(let i=0;i<filterId.length; i++){
+      let currentSetCards = await tcgdex.fetchCards(filterId[i]);
+      allCards.push(currentSetCards);
+    }
+    // console.log(allCards.flat(Infinity).length)
+    // console.log(allCards.length)
+    // fs.writeFileSync("tcg-pocket-cards2.json", JSON.stringify(allCards, null, 2), "utf8");
+  
+  res.send(allCards).status(200);
+})
+
 
 
 
