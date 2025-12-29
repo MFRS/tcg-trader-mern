@@ -206,7 +206,7 @@ async function handleLogout(event){
   <Typography sx={{ p: 2 }}>Manage Cards Menu</Typography>
   {/* <TextField id="outlined-basic" label="Outlined" variant="outlined" /> */}
     <SearchBox/>
-    <Button variant="outlined" onClick={handleDisplayManageCardsSubMenu}>Manage Cards</Button>
+    {/* <Button variant="outlined" onClick={handleDisplayManageCardsSubMenu}>Manage Cards</Button> */}
   </Popover>
 )}
 {/* // handle popover menu  */}

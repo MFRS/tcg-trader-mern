@@ -1,4 +1,5 @@
-import React,  { type ChangeEvent, useState } from 'react'
+import React,  { type ChangeEvent, useState, useRef, useEffect } from 'react'
+import type { PokemonCard } from '../../types/PokemonCard';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -12,49 +13,118 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, {type SelectChangeEvent } from '@mui/material/Select';
+import Typography from '@mui/material/Typography';
+
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import { List,type RowComponentProps } from 'react-window';
+import { Button } from '@mui/material';
+
+
+
+
 export const SearchBox = () => {
     const pokeCardStore = usePokemonCardStore();
-    const [currentSetDropdown,setCurrentSetDropdown] = useState('0');
+    const [currentRarityDropdown,setCurrentRarityDropdown] = useState('0');
     const [currentExpansionDropdown,setCurrentExpansionDropdown] = useState('0');
 
-const handleSetDropdownChange = (event: SelectChangeEvent) => {
-    setCurrentSetDropdown(event.target.value as string);
-  };
-const handleExpansionDropdownChange = (event: SelectChangeEvent) => {
-    setCurrentExpansionDropdown(event.target.value as string);
-  };
+    // handle search Query
+    const [searchInputValue,setSearchInputValue] = useState<string>("")
+  const [showSearchQueryResultsTable,setShowSearchQueryResultsTable] = useState(false);
+  const searchQueryListRef = useRef(null);
 
+  // handle card selected display 
+  const [showCardSelected,setShowCardSelected] = useState(false);
+  const [cardSelectedFromSearchQuery,setCardSelectedFromSearchQuery] = useState<PokemonCard>();
+
+const handleSetDropdownChange = (event: SelectChangeEvent) => {
+
+  // setting dropdown value before zustando doesnt recognize current value set
+  setCurrentRarityDropdown(event.target.value as string);
+};
+const handleExpansionDropdownChange = (event: SelectChangeEvent) => {
+  setCurrentExpansionDropdown(event.target.value as string);
+};
+
+// sets searchQuery AFTER rarity option has been set
+useEffect(()=> {
+  pokeCardStore.setPokemonCardsSearchQuery(useSearchFunction(searchInputValue,pokeCardStore,currentRarityDropdown,currentExpansionDropdown))
+  setShowSearchQueryResultsTable(true);
+  
+},[currentRarityDropdown])
+
+// sets searchQuery AFTER expansion option has been set
+useEffect(()=>{
+  pokeCardStore.setPokemonCardsSearchQuery(useSearchFunction(searchInputValue,pokeCardStore,currentRarityDropdown,currentExpansionDropdown))
+  setShowSearchQueryResultsTable(true);
+  
+},[currentExpansionDropdown])
 
 function handleChangeSearchBar(event:ChangeEvent<HTMLInputElement>){
-// alert("t")
-// let filteredListQuery1:string[] = [];
-// for(let i=0;i<pokeCardStore.length;i++){
-//     let currentPokemonCard = pokeCardStore[i];
-//     let currentPokemonCardName:string = currentPokemonCard.newDisplayName;
-//     // console.log(currentPokemonCardName?.toString().substring(0,1))
-//     if(currentPokemonCardName?.toString().substring(0,1) === event.target.value.toString()){
-//         console.log("found")
-//         filteredListQuery1.push(currentPokemonCardName)
-//     }
-// }
-// console.log(filteredListQuery1)
+  
+  // set currentSearchValue
+  // setCurrentSearchQueryInput(event.target.value as string)
+  
+  // goal:
+  // when I type a letter
+  // list is displayed (needs conditional rendering )
+  // need to set something that makes list appear
+  // map list to show result of useSearchFunction
+  
+  // what I've tried 
+  /*
+  
+  Test 1 -
+  when setting value to a useState, the input box loses focus, and doesn't regain
+  focus even with useRef in input box and calling focus through this function
+  AND through a useEffect
+  
+  Test 2 -
+  setting value to use Ref. I was able to get first value of result, but when using map, syntax 
+  works very odd, and I couldn't get it to show anything else.
+  I can't put the values inside {} as they are normally in when using useState
+  
+  Test 3 - set value to zustand, and call through there. Same result as test 1
 
-//  return query1;
-console.log(useSearchFunction(event.target.value,pokeCardStore.pokemonCards))
+
+  */
+
+
+
+
+
+
+ 
+ setSearchInputValue(event.target.value as string);
+  setShowSearchQueryResultsTable(true);
+  pokeCardStore.setPokemonCardsSearchQuery(useSearchFunction(event.target.value,pokeCardStore,currentRarityDropdown,currentExpansionDropdown))
+  // console.log(searchQueryListRef)
+  // key={};
+  
 }
+// hide table if no input is there
+// useEffect(() => {
+// setShowSearchQueryResultsTable(false);
+// },[searchInputValue===""])
+
 
     
+function handleSearchQueryItemClick(e) {
+  setShowSearchQueryResultsTable(false);
+  setShowCardSelected(true);
+  console.log(e.target.index)
+  // setCardSelectedFromSearchQuery(pokeCardStore.searchQuery[e.target.index])
 
 
-
-
+}
 
   const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -97,10 +167,16 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
   },
 }));
+
     
   return (
 
 <div>
+
+
+
+
+
  <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
@@ -120,8 +196,12 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
             </SearchIconWrapper>
             <StyledInputBase
               placeholder="Search…"
+              value={searchInputValue}
+              ref={searchQueryListRef}
+              
               inputProps={{ 'aria-label': 'search' }}
               onChange={handleChangeSearchBar}
+              autoFocus
             />
           </Search></TableCell>
           <TableCell>
@@ -131,16 +211,16 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   <Select
     labelId="demo-simple-select-label"
     id="demo-simple-select"
-    value={currentSetDropdown}
-    label="currentSet"
+    value={currentRarityDropdown}
+    label="currentRarity"
     onChange={handleSetDropdownChange}
     
    
 
     >
-    {pokeCardStore.rarities.map((currentRarity,id) => (
+    {pokeCardStore.rarities.map((currentRarity,idx) => (
       
-      <MenuItem value={id}>{currentRarity}</MenuItem>
+      <MenuItem value={idx}>{currentRarity}</MenuItem>
     )
   )
 }
@@ -155,7 +235,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   <Select
     labelId="demo-simple-select-label"
     id="demo-simple-select"
-    value={currentExpansionDropdown}
+   value={currentExpansionDropdown}
     label="currentExpansion"
     onChange={handleExpansionDropdownChange}
    
@@ -180,8 +260,33 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
         </TableBody>
       </Table>
     </TableContainer>
-    
-</div>
 
+    {/* manage cards search display list */}
+    {/* it only displays if the searchQuery is smaller than the full list of pokemon cards */}
+{showSearchQueryResultsTable && pokeCardStore.searchQuery.length !=pokeCardStore.pokemonCards.length && (
+    <div>
+
+  {pokeCardStore.searchQuery.map((currentPokemonCard)=>(
+    // <Button>
+
+      <Typography >{currentPokemonCard.name}</Typography>
+    // </Button>
+
+  ))}
+
+  </div>
+)
+}
+{/* show Card selected */}
+{showCardSelected && (
+  <div>
+
+    <Typography>{cardSelectedFromSearchQuery.name}</Typography>
+    
+    </div>
+)}
+</div>
   )
 }
+  
+

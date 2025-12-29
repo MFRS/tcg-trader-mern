@@ -7,6 +7,9 @@ export type PokemonDBStoreType ={
     pokemonCards: PokemonCard[];
     rarities: string[];
     expansions : string[];
+    searchQuery: PokemonCard[];
+    splitSearchPokemonNameCharacters: string[];
     
     setPokemonCards: (pokemonCards:PokemonCard[]) => void;
+    setPokemonCardsSearchQuery : (searchQuery:PokemonCard[]) => void;
 }
