@@ -4,12 +4,19 @@ export interface User {
   lastLogIn: string;   // you may later change this to Date
   email: string;
   password: string;
-  tcgIdNo: string;
-  tcgIdName: string;
+  discordId:string;
+  accounts: Accounts[];
   // for PokeCard getting infor on all cardsWanted
   cardsWanted?:CardTradeEntry[];
+  
+}
 
+export interface Accounts {
+  
+  tcgIdNo: string;
+  tcgIdName: string;
   cardTrades: CardTrades;
+  
 }
 
 export interface CardTrades {

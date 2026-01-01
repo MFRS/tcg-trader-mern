@@ -83,7 +83,7 @@ export function useSearchFunction(
     //    let currentSplitSearchPokemonNameCharacters = pokeCardStore.splitSearchPokemonNameCharacters[w];
 
       return currentPokemonCard.name.split(" ").some((currentPokemonCardWord,idx,arr) => {
-        console.log(`${typeof currentSearchQueryWord} ${arr}`)
+        // console.log(`${typeof currentSearchQueryWord} ${arr}`)
         return currentSearchQueryWord.toLowerCase() ==
           currentPokemonCardWord
             .substring(0, currentSearchQueryWord.length)
@@ -183,6 +183,6 @@ export function useSearchFunction(
 
   }
   const query1 = pokeCardStore.pokemonCards.filter(filterSearchQuery);
-  console.log(query1)
+  // console.log(query1)
     return query1;
 }

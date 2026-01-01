@@ -149,13 +149,27 @@ router.post(`/${routerUserAccounts}`,async (req,res) => {
       lastLogIn: currentDate,
       email:req.body.email,
       password:req.body.password,
-      tcgIdNo:req.body.tcgIdNo,
-      tcgIdName:req.body.tcgIdName,
-      cardTrades:{
-        cardsWanted:[],
-        cardsForTrade:[],
-      }
+      discordId:req.body.discordId,
+      accounts:[
+      ]
     };
+    // res.send(req.body.accounts[0].tcgIdNo).status(500)
+
+    // this maps all the accounts inside to the newUser Object
+    req.body.accounts.map((currentAccount,idx) => {
+        newUser.accounts.push(
+          {
+            
+            tcgIdNo:req.body.accounts[idx].tcgIdNo,
+            tcgIdName:req.body.accounts[idx].tcgIdName,
+            cardTrades:{
+              cardsWanted:[],
+              cardsForTrade:[],
+            }
+
+        }
+      )
+    })
     let collection = await db.collection(collectionUserAccounts);
     let emailClash =await collection.findOne({email:newUser.email})
     let usernameClash =await collection.findOne({name:newUser.name})
@@ -332,7 +346,64 @@ async function syncRecordsDelta({ cardId, userId, lang, delta }) {
   }
 }
 
-router.patch(`/${routerUserAccounts}/:userId/${routerCards}`, authJwt, async (req, res) => {
+
+
+// Update cards
+
+// request comes with 
+
+// TODO - for loop (outside of patch , sends :
+  // tcgIdNo && card Selected && CardsWanted OR cardsForTrade && quantity && language
+  router.patch(`/${routerUserAccounts}/:userId/${routerCards}/previousFunction`, authJwt, async (req, res) => {
+    
+    /*
+ 
+  ^ for loop (in user.accounts) to find
+  * each request to FIND account IN user that MATCHES tcgIdNo ,
+  *check if user is adding to cardsforTrade or cardsWanted
+  *check IF card Is already there by checking IF id is already in objects 
+  AND matching language is already there
+  ^IF matches 
+    CHECK if quantity is positive or negative
+      IF positive  
+        then add  to quantity of selected card WITH matching id AND language
+        IF negative
+          IF quantity of selected card after reducing is smaller than 0
+            remove card from cardsWanted OR cardsForTrade
+          ELSE
+            then reduce to quantity of selected card WITH matching id AND language
+  ^IF NOT, add a new card object to chosen (CardsWanted or cardsForTrade) with selected quantity
+
+  ^if its cardsForTrade
+  for loop (in cards database) to find card from cardSelected
+    IF there's an object in tradeUsers(loop) with matching tcgIDNo
+      IF language is already there
+        IF Quantity is positive
+          Add to quantity
+        IF quantity is negative
+          IF current quantity is smaller
+            remove language
+            IF there's no languages left in current TCGIDNo object in current card in cards database
+              remove TCGIDno object from current card
+            
+          
+
+
+
+
+{
+    "id": "A1-003",
+    "language": "en",
+    "quantity": 2,
+    "tcgIdNo": "6915bdc1a03d8cdb3d287ac1"
+}
+
+
+
+
+*/
+
+router.patch(`/${routerUserAccounts}/:userId/${routerCards}/previousFunction`, authJwt, async (req, res) => {
   try {
     const { userId } = req.params;
     const { list, card } = req.body || {};

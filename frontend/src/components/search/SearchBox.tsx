@@ -25,8 +25,20 @@ import TableRow from '@mui/material/TableRow';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
-import { List,type RowComponentProps } from 'react-window';
 import { Button } from '@mui/material';
+import List from '@mui/material/List';
+import ListSubheader from '@mui/material/ListSubheader';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Collapse from '@mui/material/Collapse';
+import InboxIcon from '@mui/icons-material/MoveToInbox';
+import DraftsIcon from '@mui/icons-material/Drafts';
+import SendIcon from '@mui/icons-material/Send';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import StarBorder from '@mui/icons-material/StarBorder';
+import CardImagePopover from '../PokeCards/CardImagePopover';
+
+
 
 
 
@@ -45,17 +57,26 @@ export const SearchBox = () => {
   const [showCardSelected,setShowCardSelected] = useState(false);
   const [cardSelectedFromSearchQuery,setCardSelectedFromSearchQuery] = useState<PokemonCard>();
 
-const handleSetDropdownChange = (event: SelectChangeEvent) => {
-
-  // setting dropdown value before zustando doesnt recognize current value set
-  setCurrentRarityDropdown(event.target.value as string);
-};
-const handleExpansionDropdownChange = (event: SelectChangeEvent) => {
-  setCurrentExpansionDropdown(event.target.value as string);
-};
-
-// sets searchQuery AFTER rarity option has been set
-useEffect(()=> {
+  // handle search query results list 
+  const [openSearchQueryResultList, setOpenSearchQueryResultList] = React.useState(true);
+  const [currentSearchQueryResultsListHovered,setCurrentSearchQueryResultsListHovered] = useState<HTMLButtonElement | null>(null);
+  const handleSearchQueryResultListClick = () => {
+    setOpenSearchQueryResultList(!openSearchQueryResultList);
+  };
+  
+  
+  const handleSetDropdownChange = (event: SelectChangeEvent) => {
+    setOpenSearchQueryResultList(true);
+    // setting dropdown value before zustando doesnt recognize current value set
+    setCurrentRarityDropdown(event.target.value as string);
+  };
+  const handleExpansionDropdownChange = (event: SelectChangeEvent) => {
+    setOpenSearchQueryResultList(true);
+    setCurrentExpansionDropdown(event.target.value as string);
+  };
+  
+  // sets searchQuery AFTER rarity option has been set
+  useEffect(()=> {
   pokeCardStore.setPokemonCardsSearchQuery(useSearchFunction(searchInputValue,pokeCardStore,currentRarityDropdown,currentExpansionDropdown))
   setShowSearchQueryResultsTable(true);
   
@@ -67,6 +88,78 @@ useEffect(()=>{
   setShowSearchQueryResultsTable(true);
   
 },[currentExpansionDropdown])
+
+
+// search query component
+const SearchQueryListComponent = () => {
+
+  
+  
+  return (
+    <div>
+      {/* {showCardSelected && (
+        <CardImagePopover card={cardSelectedFromSearchQuery || null} parentElement={currentSearchQueryResultsListHovered}/> 
+    
+      )} */}
+    <List
+      sx={{ width: '100%', maxWidth: 760, bgcolor: 'background.paper' }}
+      component="nav"
+      aria-labelledby="nested-list-subheader"
+    >
+      
+      <ListItemButton onClick={handleSearchQueryResultListClick}>
+        <ListItemIcon>
+          <InboxIcon />
+        </ListItemIcon>
+        <ListItemText primary={`Card Selected : ${cardSelectedFromSearchQuery?.name || "None"}  `} />
+        {openSearchQueryResultList ? <ExpandLess /> : <ExpandMore />}
+      </ListItemButton>
+      <Collapse in={openSearchQueryResultList} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+
+
+          {/* Map Begins */}
+            {pokeCardStore.searchQuery.map((currentPokemonCard,idx) => (
+          <ListItemButton sx={{ pl: 4 }} 
+          key={idx}
+          onClick={()=> {
+            setCardSelectedFromSearchQuery(currentPokemonCard)
+            handleSearchQueryResultListClick()
+          }
+        }
+          // onMouseEnter={()=> {
+          //   // console.log("hover")
+          //   setShowCardSelected(true);
+          //   setCardSelectedFromSearchQuery(currentPokemonCard)
+          //   setCurrentSearchQueryResultsListHovered(event?.currentTarget)
+            
+          // }
+          // }
+          
+            >
+
+
+              
+            {/* <ListItemIcon>
+              <StarBorder />
+            </ListItemIcon> */}
+              <ListItemText primary={currentPokemonCard.name} />
+               <img
+          src={`${currentPokemonCard.image}/low.png`}
+          alt={currentPokemonCard.newDisplayName}
+          width={100}
+          style={{ display: "block", marginTop: "8px",float:"left" }} />
+          </ListItemButton>
+            ))}
+        </List>
+      </Collapse>
+    </List>
+  
+  </div>
+  );
+}
+
+
 
 function handleChangeSearchBar(event:ChangeEvent<HTMLInputElement>){
   
@@ -104,6 +197,7 @@ function handleChangeSearchBar(event:ChangeEvent<HTMLInputElement>){
 
  
  setSearchInputValue(event.target.value as string);
+ setOpenSearchQueryResultList(true);
   setShowSearchQueryResultsTable(true);
   pokeCardStore.setPokemonCardsSearchQuery(useSearchFunction(event.target.value,pokeCardStore,currentRarityDropdown,currentExpansionDropdown))
   // console.log(searchQueryListRef)
@@ -115,16 +209,11 @@ function handleChangeSearchBar(event:ChangeEvent<HTMLInputElement>){
 // setShowSearchQueryResultsTable(false);
 // },[searchInputValue===""])
 
-
+useEffect(()=> {
+console.log(currentSearchQueryResultsListHovered)
+},[currentSearchQueryResultsListHovered])
     
-function handleSearchQueryItemClick(e) {
-  setShowSearchQueryResultsTable(false);
-  setShowCardSelected(true);
-  console.log(e.target.index)
-  // setCardSelectedFromSearchQuery(pokeCardStore.searchQuery[e.target.index])
 
-
-}
 
   const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -266,13 +355,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 {showSearchQueryResultsTable && pokeCardStore.searchQuery.length !=pokeCardStore.pokemonCards.length && (
     <div>
 
-  {pokeCardStore.searchQuery.map((currentPokemonCard)=>(
-    // <Button>
-
-      <Typography >{currentPokemonCard.name}</Typography>
-    // </Button>
-
-  ))}
+  <SearchQueryListComponent></SearchQueryListComponent>
 
   </div>
 )
@@ -281,7 +364,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 {showCardSelected && (
   <div>
 
-    <Typography>{cardSelectedFromSearchQuery.name}</Typography>
     
     </div>
 )}
