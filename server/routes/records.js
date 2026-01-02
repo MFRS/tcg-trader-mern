@@ -353,26 +353,217 @@ async function syncRecordsDelta({ cardId, userId, lang, delta }) {
 // request comes with 
 
 // TODO - for loop (outside of patch , sends :
-  // tcgIdNo && card Selected && CardsWanted OR cardsForTrade && quantity && language
-  router.patch(`/${routerUserAccounts}/:userId/${routerCards}/previousFunction`, authJwt, async (req, res) => {
-    
-    /*
+
+
+// ^ this function is taking in the following object:
+/*
+{
+  "list": "cardsForTrade",
+  "card": { "language": "es", "id": "cardNameId" },
+  "delta": 1
+  }
+  */
+
+// ^ Validation works with:
+/*
+req.user.id is the mongodb _id
+check if it matches with the userID url sent from frontend 
+if not it rejects request
+
+*/
  
-  ^ for loop (in user.accounts) to find
-  * each request to FIND account IN user that MATCHES tcgIdNo ,
-  *check if user is adding to cardsforTrade or cardsWanted
-  *check IF card Is already there by checking IF id is already in objects 
-  AND matching language is already there
-  ^IF matches 
-    CHECK if quantity is positive or negative
-      IF positive  
-        then add  to quantity of selected card WITH matching id AND language
-        IF negative
-          IF quantity of selected card after reducing is smaller than 0
-            remove card from cardsWanted OR cardsForTrade
-          ELSE
-            then reduce to quantity of selected card WITH matching id AND language
-  ^IF NOT, add a new card object to chosen (CardsWanted or cardsForTrade) with selected quantity
+ 
+ router.patch(`/${routerUserAccounts}/:userId/${routerCards}`, authJwt, async (req, res) => {
+   try {
+    //  console.log(req)
+     // userId info comes from authJwt
+     // ^ tcgIdNo && card Selected && CardsWanted OR cardsForTrade && quantity && language
+    const { userId } = req.params;
+      const {tcgIdNo} = req.body || {};
+    const { list, card } = req.body || {};
+    let { delta } = req.body || {};
+    
+    
+    
+    // --- auth: only self can modify
+    if (req.user?.id !== userId) {
+      return res.status(403).json({ code: "forbidden", message: "Can only modify your own trades" });
+    }
+    
+    
+    // --- validate
+    if (!ObjectId.isValid(userId)) return res.status(400).json({ code: "bad_user_id", message: "Invalid userId" });
+    const allowed = ["cardsWanted", "cardsForTrade"];
+    if (!allowed.includes(list)) return res.status(400).json({ code: "bad_list", message: `list must be one of ${allowed.join(", ")}` });
+    if (!card || !card.id || !card.language) {
+      return res.status(400).json({ code: "bad_card", message: "card needs id and language" });
+    }
+    delta = parseInt(delta, 10);
+    if (!Number.isFinite(delta) || delta === 0) {
+      return res.status(400).json({ code: "bad_delta", message: "delta must be a non-zero integer (e.g., 1 or -1)" });
+    }
+    if (delta > 10) delta = 10;
+    if (delta < -10) delta = -10;
+    
+    const ownerId = new ObjectId(userId);
+    
+    
+    // --- fetch pre-state to detect activation transition later
+    const preDoc = await db.collection("accounts").findOne(
+      { _id: ownerId },
+      // { projection: { "cardTrades.cardsWanted": 1, "cardTrades.cardsForTrade": 1 } }
+    );
+    if (!preDoc) return res.status(404).json({ code: "user_not_found", message: "No account with that id" });
+    
+    // ^ for loop (in user.accounts) to find
+    // * each request to FIND account IN user that MATCHES tcgIdNo ,
+    // console.log(preDoc)
+    const currentUserAccount = preDoc.accounts.find(currentAccount => currentAccount.tcgIdNo === tcgIdNo)
+
+/*
+update this currentTcgIdNoCardUpdateObject with either 
+
+ {
+              "id": "A1-003",
+              "language": {
+                "en": 1,
+                "es": 1
+              },
+              
+              "quantity": 1,
+              "owner": "tcgIdNo"
+            }
+
+
+            OR
+
+            push new language into "language" and respective quantity
+
+            OR
+
+            update selected language quantity
+
+
+
+*/
+//   type language= {
+  //     [l in Languages]:number;
+  //   }
+  
+  // type newUserCardSubmission ={
+    //   id:string,
+    //   language:{},
+    // }
+    
+    
+    let languages = ["en" , "es" ,"fr" , "de", "it" , "pt", "jp" ,"kr", "ch"];
+    let currentTcgIdNoCardUpdateObject = {
+      
+    }
+    
+    
+    
+    
+    
+    // check if user is adding to cardsforTrade or cardsWanted
+    if(list == "cardsWanted"){
+      // ^ goal - patch currentTcgIdNo with card and language with current quantity
+      /*
+      check IF card Is already there by checking IF id is already in objects 
+      
+      {
+        tcgIdNo: '1340-2340',
+        tcgIdName: 'idName',
+        cardTrades: { cardsWanted: [], cardsForTrade: [] }  
+        }
+        */
+       const isCardAlreadyInCardsWanted = currentUserAccount.cardTrades.cardsWanted.find(currentcard => currentcard.id ===card.id)
+       //  if card is there, check for language,
+       if(isCardAlreadyInCardsWanted){
+        //  IS matching language is already there
+        try{
+          
+          const isLangAlreadyInCard = isCardAlreadyInCardsWanted.language[language];
+          // if its there, update quantity 
+          if(isLangAlreadyInCard !== undefined){
+            // if delta positive
+           if(delta>0){
+             //        then add  to quantity of selected card WITH matching id AND language
+             
+          }else{
+            // ^          IF quantity of selected card after reducing is smaller than 0
+            // remove card from tcgid account
+            //            remove card from cardsWanted OR cardsForTrade
+            //          ELSE
+            //            then reduce to quantity of selected card WITH matching id AND language
+           }
+          //  ^IF matches 
+          
+          
+        }
+      }catch(err){
+        
+      }
+      
+      
+      //  card is not in tcgId account
+    }else if(!isCardAlreadyInCardsWanted){
+        //  ^IF NOT, add a new card object to chosen (CardsWanted or cardsForTrade) with selected quantity
+        console.log("card not ni cards wanted")
+        try{
+          // object hasn't been created yet, so there cannot be any kind of notation,
+          // it has to be a new object with all the variables and their names
+          // replace dot notations for square braket notations
+          currentTcgIdNoCardUpdateObject['id'] =card.id;
+
+          currentTcgIdNoCardUpdateObject['language']={};
+          // add all languages to this card
+          languages.forEach((currentLang,idx)=> {
+            currentTcgIdNoCardUpdateObject['language'][currentLang]=0; 
+            
+          } )
+          
+          if(languages.includes(card.language)){
+            // for example, request has "es", so it checks out, otherwise return false request
+            currentTcgIdNoCardUpdateObject['language'][card.language]=delta; 
+
+          }else{
+            // cancels request, asks to return correct language in return
+            return res.status(400).json({ code: "bad_delta", message: "language doesn't match one existent in Pokemon Pocket" });
+          }
+
+
+          currentTcgIdNoCardUpdateObject['tcgIdNo']=currentUserAccount.tcgIdNo,
+          currentTcgIdNoCardUpdateObject['tcgIdName']=currentUserAccount.tcgIdName,
+    
+          
+          console.log(currentTcgIdNoCardUpdateObject);
+         
+
+          // add currentTcgIdNoCardUpdateObject to mongodb
+
+
+        }catch(error){
+          console.log(error)
+        }
+      // in this loop, it sets all to the delta, and after this is created this won't be called anymore
+
+
+      }else{
+        // card is already in the tcgId Account in CardsWanted
+        // update
+      }
+    }
+
+  }catch(error){
+    
+  }
+  
+  
+  return res.status(201).json({message:``})
+});
+/*
+ 
 
   ^if its cardsForTrade
   for loop (in cards database) to find card from cardSelected
